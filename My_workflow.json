@@ -1,0 +1,297 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "16733f7b-7623-4604-8a5b-a5171c646a01",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3524b2cd-c8e1-43bb-a76e-8e303b896452",
+      "name": "Webhook",
+      "webhookId": "16733f7b-7623-4604-8a5b-a5171c646a01"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Transcipt:{{ $json.message }}",
+        "options": {
+          "systemMessage": "=#Role\nYou are an experienced AI appointment setter ,based on the user transcript :\n#Task\n1. use the \"GetAvailability\" tool to first check that the time the user has requested for the booking is available .\n2.If the time that the user has requested is available ,proceed to use the \"BookAppointment\" tool to confirm and create the booking for that timeslot. Then return the output , \"Great ,I've scheduled your appointment at [insert user's requested date], we look forward to speaking with you soon,\ngoodbye!!\"\n3. If the time that the user requested is not available, return with the output \"I'm sorry, but the time you requested at [The user's requested time] is not available, would you like to choose a different time?\"\n#Notes\n- The current date is {{ $now }}\n- Also define the description, i.e., the name of the user and the purpose of the meet."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -20
+      ],
+      "id": "be497c2e-6344-47fd-b3b6-8c099cc2eb60",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCalls[0].id }}\",\n      \"result\":{{ JSON.stringify($json.output) }}\n    }\n    ]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "85eaa252-893f-4c36-a1c2-a9111cc882fa",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "mdanasidrishisem4@gmail.com",
+          "mode": "list",
+          "cachedResultName": "mdanasidrishisem4@gmail.com"
+        },
+        "start": "={{ $fromAI(\"StartTime\",\"The start timme user has requested for the booking\") }}",
+        "end": "={{ $fromAI(\"EndTime\",\"Assume the end time is30 minutes after the start time\") }}",
+        "additionalFields": {
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', `The purpose of meeting/appointment`, 'string') }}",
+          "summary": "Aspra booked appointment"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        820,
+        220
+      ],
+      "id": "12bea10e-2ce6-467f-bf3d-7377dbe737ea",
+      "name": "BookAppointment",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "44Iz7mYpitSfwY0b",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "mdanasidrishisem4@gmail.com",
+          "mode": "list",
+          "cachedResultName": "mdanasidrishisem4@gmail.com"
+        },
+        "timeMin": "={{ $fromAI(\"StartTime\",\"The start timme user has requested for the booking\") }}",
+        "timeMax": "={{ $fromAI(\"EndTime\",\"Assume the end time is 30 minutes after the start time\") }}",
+        "options": {
+          "timezone": {
+            "__rl": true,
+            "value": "Asia/Kolkata",
+            "mode": "list",
+            "cachedResultName": "Asia/Kolkata"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        280
+      ],
+      "id": "ad634cc8-2680-441a-94d2-f4f5c9d74722",
+      "name": "GetAvailability",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "44Iz7mYpitSfwY0b",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.message.artifact.messages",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "24489344-2f04-4ed4-90c1-fae1f226eefc",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "38bd27d3-ada7-436f-af11-fa37cb9fe17a",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        220
+      ],
+      "id": "ef2d46bc-c737-4330-a52b-c0e419f67675",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "GoHG1Hic8kGHVskl",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite-preview-02-05",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        200
+      ],
+      "id": "980e4f57-837a-4953-a95f-878d986861ab",
+      "name": "BACKUP MODEL",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0HMZY0N51djXtMCq",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BookAppointment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetAvailability": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BACKUP MODEL": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2f8b9853-63f1-4920-8f77-55c563d926c8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4f321a4b4b8f073f42d2576a5f512c4bca233eeffac8c97d95e2afc9fc0d483d"
+  },
+  "id": "lvbxhR7AzmMBuMrx",
+  "tags": []
+}
