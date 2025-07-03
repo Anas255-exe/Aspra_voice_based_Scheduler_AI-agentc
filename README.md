@@ -2,7 +2,7 @@
 
 **Aspra** is a conversational voice agent built to schedule meetings in a natural, human-like way through real-time conversation. Using Vapi.ai, GPT-4o, n8n, and Google Calendar API, it handles multi-turn interactions, understands vague inputs, checks for availability, and confirms bookings — all over voice.
 
-This project was submitted as part of the **NextDimension Take-Home Assignment** focused on intelligent voice agent design, LLM reasoning, and external tool integration.
+
 ![image](https://github.com/user-attachments/assets/4c63b549-653c-4468-bb53-bb7ffffae66b)
 
 
